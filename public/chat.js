@@ -6,4 +6,7 @@ socket.on('ahmed', (message) => {
     console.log(message)
 });
 
-socket.on()
+document.querySelector('#increment').addEventListener('click', () => {
+    console.log('increment button clicked');
+    socket.emit('increment');
+});

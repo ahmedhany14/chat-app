@@ -20,25 +20,31 @@ app.use(express.static(publicDirectoryPath))
 
 let count = 0;
 io.on('connection', (socket) => {
-    console.log('New WebSocket connection')
+    // send message to the client after connection
+    socket.emit('message', 'Welcome to the chat app!')
 
+    // send message to all clients except the client that connected
+
+    socket.on('sendMessage', (message) => {
+        io.emit('message', message);
+    });
+
+    socket.broadcast.emit('message', 'A new user has joined!'); // send message to all clients except the client that connected
+
+    socket.on('disconnect', () => {
+        io.emit('message', 'A user has left!'); // send message to all clients except the client that connected
+    });
+
+    /*
     socket.on('increment', () => {
         count++;
-        /*
-        socket.emit(
-            'ahmed',
-            `a7a ya ahmed enta mesh faheem ay 7aga, ${count}`
-        );
-        */
-        io.emit(
-            'ahmed',
-            `هتظهر هناك${count}`
-        );
-        /*
-        this will send the message to all the connected clients
-        but if we use socket.emit it will send the message to the client that sent the message
-        */
+        //socket.emit('ahmed', `a7a ya ahmed enta mesh faheem ay 7aga, ${count}`);
+        io.emit('ahmed', `a7a ya ahmed enta mesh faheem ay 7aga, ${count}`);
+        //socket: send message to the client that connected in the browser with console.log
+        //io: send message to all clients that connected in the browser with console.log
     });
+    */
+
 });
 server.listen(port, () => {
     console.log(`Server is up on port ${port}!`)

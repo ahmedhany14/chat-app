@@ -12,21 +12,27 @@ document.querySelector('#increment').addEventListener('click', () => {
 document.querySelector('#message-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const message = e.target.elements.message.value;
-    socket.emit('sendMessage', message);
+    socket.emit('sendMessage', message, (err) => {
+        if (err) return alert(err);
+        console.log('Message delivered');
+    });
 });
 
 document.querySelector('#send-location').addEventListener('click', async () => {
 
     const location = navigator.geolocation;
-    let lat, lng;
+
     await location.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
-        socket.emit('sendLocation', { latitude, longitude });
+        socket.emit('sendLocation', { latitude, longitude }, (err) => {
+            if (err) return alert(err);
+            console.log('Location shared');
+        });
     });
 
 
 });
 
-socket.on('message', (message) => {
+socket.on('message', (message,) => {
     console.log(message)
 });

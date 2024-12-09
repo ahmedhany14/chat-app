@@ -3,7 +3,6 @@ import path from "path"
 import dotenv from "dotenv"
 import http from "http"
 import { Server } from "socket.io"
-import e from "express"
 
 dotenv.config({
     path: 'conf.env'
@@ -33,6 +32,10 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         io.emit('message', 'A user has left!'); // send message to all clients except the client that connected
+    });
+
+    socket.on('sendLocation', (coords) => {
+        io.emit('message', `Location: https://google.com/maps?q=${coords.latitude},${coords.longitude}`);
     });
 
     /*

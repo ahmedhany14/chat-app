@@ -15,6 +15,17 @@ document.querySelector('#message-form').addEventListener('submit', (e) => {
     socket.emit('sendMessage', message);
 });
 
+document.querySelector('#send-location').addEventListener('click', async () => {
+
+    const location = navigator.geolocation;
+    let lat, lng;
+    await location.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        socket.emit('sendLocation', { latitude, longitude });
+    });
+
+
+});
 
 socket.on('message', (message) => {
     console.log(message)

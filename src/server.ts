@@ -17,19 +17,26 @@ const publicDirectoryPath = path.join(__dirname, '../public')
 
 app.use(express.static(publicDirectoryPath))
 
+function generateMessage(text: string) {
+    return {
+        text,
+        createdAt: new Date().getTime()
+    }
+}
+
 io.on('connection', (socket) => {
-    socket.emit('message', 'Welcome to the chat app!') // send message to the client after connection
+    socket.emit('message', generateMessage('Welcome to the chat app!')) // send message to the client after connection
 
 
     socket.on('sendMessage', (message, next) => {
-        io.emit('message', message);
+        io.emit('message', generateMessage(message));
         next();
     });
 
     socket.broadcast.emit('message', 'A new user has joined!'); // send message to all clients except the client that connected
 
     socket.on('disconnect', () => {
-        io.emit('message', 'A user has left!'); // send message to all clients that user has left
+        io.emit('message', generateMessage('A user has left!')); // send message to all clients that user has left
     });
 
     socket.on('sendLocation', (coords, next) => {

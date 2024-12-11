@@ -50,7 +50,8 @@ document.querySelector('#send-location').addEventListener('click', async () => {
 socket.on('message', (message, err) => {
     console.log(message)
     const html = Mustache.render(messageTemplate, {
-        message
+        message: message.text,
+        createdAt: moment(message.createdAt).format('h:mm a')
     })
     $messages.insertAdjacentHTML('beforeend', html)
 

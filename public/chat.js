@@ -9,10 +9,23 @@ document.querySelector('#increment').addEventListener('click', () => {
     socket.emit('increment');
 });*/
 
+const $messageForm = document.querySelector('#message-form')
+const $messageFormInput = $messageForm.querySelector('input')
+const $messageFormButton = $messageForm.querySelector('button')
+const $sendLocationButton = document.querySelector('#send-location')
+const $messages = document.querySelector('#messages')
+
+// Templates
+const messageTemplate = document.querySelector('#message-template').innerHTML
+
 document.querySelector('#message-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const message = e.target.elements.message.value;
     socket.emit('sendMessage', message, (err) => {
+        $messageFormButton.removeAttribute('disabled')
+        $messageFormInput.value = ''
+        $messageFormInput.focus()
+
         if (err) return alert(err);
         console.log('Message delivered');
     });
@@ -35,4 +48,9 @@ document.querySelector('#send-location').addEventListener('click', async () => {
 
 socket.on('message', (message,) => {
     console.log(message)
+    const html = Mustache.render(messageTemplate, {
+        message
+    })
+    $messages.insertAdjacentHTML('beforeend', html)
+
 });

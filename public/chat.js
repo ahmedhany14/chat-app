@@ -1,13 +1,4 @@
 const socket = io()
-// this is for increment button in index.html, which used to increment the count with 1 by socket.io
-/*
-socket.on('ahmed', (message) => {
-    console.log(message)
-});
-document.querySelector('#increment').addEventListener('click', () => {
-    console.log('increment button clicked');
-    socket.emit('increment');
-});*/
 
 const $messageForm = document.querySelector('#message-form')
 const $messageFormInput = $messageForm.querySelector('input')
@@ -18,6 +9,9 @@ const $messages = document.querySelector('#messages')
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
 const locationTemplate = document.querySelector('#location-message-template').innerHTML
+const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML
+
+const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
 
 document.querySelector('#message-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -50,6 +44,7 @@ document.querySelector('#send-location').addEventListener('click', async () => {
 socket.on('message', (message, err) => {
     console.log(message)
     const html = Mustache.render(messageTemplate, {
+        username: message.username,
         message: message.text,
         createdAt: moment(message.createdAt).format('h:mm a')
     })
@@ -62,8 +57,24 @@ socket.on('location', (url, err) => {
     console.log('location', url)
 
     const html = Mustache.render(locationTemplate, {
-        url:url.url,
+        username: url.username,
+        url: url.url,
         createdAt: moment(url.createdAt).format('h:mm a')
     });
     $messages.insertAdjacentHTML('beforeend', html)
+});
+
+socket.emit('join', { username, room }, (error) => {
+    if (error) {
+        alert(error);
+        location.href = '/'
+    }
+});
+
+socket.on('roomData', ({ room, users }) => {
+    const html = Mustache.render(sidebarTemplate, {
+        room,
+        users
+    });
+    document.querySelector('#sidebar').innerHTML = html;
 });

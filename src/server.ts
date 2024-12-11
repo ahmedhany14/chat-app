@@ -1,12 +1,11 @@
-import express, { Request, Response } from "express"
+import express from "express"
 import path from "path"
 import dotenv from "dotenv"
 import http from "http"
 import { Server } from "socket.io"
+import { addUser, removeUser, getUser, getUsersInRoom } from './users'
 
-dotenv.config({
-    path: 'conf.env'
-});
+dotenv.config({ path: 'conf.env' });
 
 const app = express()
 const server = http.createServer(app)
@@ -17,50 +16,75 @@ const publicDirectoryPath = path.join(__dirname, '../public')
 
 app.use(express.static(publicDirectoryPath))
 
-function generateMessage(text: string) {
+function generateMessage(username: string, text: string) {
     return {
+        username,
         text,
         createdAt: new Date().getTime()
     }
 }
 
-function generateLocationMessage(url: string) {
+function generateLocationMessage(username: string, url: string) {
     return {
+        username,
         url,
         createdAt: new Date().getTime()
     }
 }
 
 io.on('connection', (socket) => {
-    socket.emit('message', generateMessage('Welcome to the chat app!')) // send message to the client after connection
-
-
     socket.on('sendMessage', (message, next) => {
-        io.emit('message', generateMessage(message));
+        const user = getUser(socket.id);
+        if (!user) return next('User not found!');
+
+        io.to(user.room).emit('message', generateMessage(user.username, message));
         next();
-    });
-
-    socket.broadcast.emit('message', 'A new user has joined!'); // send message to all clients except the client that connected
-
-    socket.on('disconnect', () => {
-        io.emit('message', generateMessage('A user has left!')); // send message to all clients that user has left
     });
 
     socket.on('sendLocation', (coords, next) => {
-        io.emit('location', generateLocationMessage(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
+        const user = getUser(socket.id);
+        if (!user) return next('User not found!');
+
+        io.to(user.room).emit('location', generateLocationMessage(user.username, `https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
         next();
     });
 
-    /*
-    socket.on('increment', () => {
-        count++;
-        //socket.emit('ahmed', `a7a ya ahmed enta mesh faheem ay 7aga, ${count}`);
-        io.emit('ahmed', `a7a ya ahmed enta mesh faheem ay 7aga, ${count}`);
-        //socket: send message to the client that connected in the browser with console.log
-        //io: send message to all clients that connected in the browser with console.log
-    });
-    */
+    socket.on('join', ({ username, room }, next) => {
+        const { error, user } = addUser({ id: socket.id, username, room });
 
+        if (error) return next(error);
+        if (!user?.room || !user?.username) return next('Username and room are required!');
+
+        socket.join(user.room);
+        socket.emit('message', generateMessage("Admin", 'Welcome to the chat app!')) // send message to the client after connection
+        socket.broadcast.to(user.room).emit('message',
+            generateMessage(user.username, `${user?.username} has joined!`)
+        ); // send message to all clients except the client that connected
+
+        // return all users in the room
+        io.to(user.room).emit('roomData', {
+            room: user.room,
+            users: getUsersInRoom(user.room)
+        });
+        next();
+    });
+
+    socket.on('disconnect', () => {
+        const user = removeUser(socket.id);
+
+        if (user) {
+            io.to(user.room).emit('message',
+                generateMessage('Admin', `${user.username} has left!`)
+            );
+            io.to(user.room).emit('roomData', {
+                room: user.room,
+                users: getUsersInRoom(user.room)
+            });
+
+        }
+    });
+    //socket: send message to the client that connected in the browser with console.log
+    //io: send message to all clients that connected in the browser with console.log
 });
 server.listen(port, () => {
     console.log(`Server is up on port ${port}!`)

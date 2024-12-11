@@ -17,6 +17,7 @@ const $messages = document.querySelector('#messages')
 
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
+const locationTemplate = document.querySelector('#location-message-template').innerHTML
 
 document.querySelector('#message-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -39,18 +40,28 @@ document.querySelector('#send-location').addEventListener('click', async () => {
         const { latitude, longitude } = position.coords;
         socket.emit('sendLocation', { latitude, longitude }, (err) => {
             if (err) return alert(err);
-            console.log('Location shared');
+            //console.log('Location shared');
         });
     });
 
 
 });
 
-socket.on('message', (message,) => {
+socket.on('message', (message, err) => {
     console.log(message)
     const html = Mustache.render(messageTemplate, {
         message
     })
     $messages.insertAdjacentHTML('beforeend', html)
 
+});
+
+socket.on('location', (url, err) => {
+    if (err) return alert(err);
+    console.log('location', url)
+
+    const html = Mustache.render(locationTemplate, {
+        url
+    });
+    $messages.insertAdjacentHTML('beforeend', html)
 });

@@ -24,6 +24,13 @@ function generateMessage(text: string) {
     }
 }
 
+function generateLocationMessage(url: string) {
+    return {
+        url,
+        createdAt: new Date().getTime()
+    }
+}
+
 io.on('connection', (socket) => {
     socket.emit('message', generateMessage('Welcome to the chat app!')) // send message to the client after connection
 
@@ -40,7 +47,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('sendLocation', (coords, next) => {
-        io.emit('location', `https://google.com/maps?q=${coords.latitude},${coords.longitude}`);
+        io.emit('location', generateLocationMessage(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`));
         next();
     });
 
